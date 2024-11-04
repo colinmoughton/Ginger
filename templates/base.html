@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ginger App</title>
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.css">
+
+    <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.js"></script>
+</head>
+<body>
+    
+
+<div class="ui menu">
+  <div class="header item">
+    <h1 " class="ui center aligned header"> Ginger</h1>
+  </div>
+  <a class="item" href="/" >
+    Home
+  </a>
+  <a class="item"  href="/stock_list" >
+    Stock List
+  </a>
+  <a class="item"  href="/graph" >
+    Graph
+  </a>
+</div>
+    
+    <div style="margin-top: 50px;" class="ui container" >
+
+    <h1 class="ui center aligned header"> List of Models</h1>
+
+    <form class = "ui form" action="/add" method="post">
+        <div class="ui field">
+            <label for="title">Add a new model</label>
+            <input type="text" name="title" placeholder="Enter Todo ...">
+            <br>
+            <button class ="ui blue button" type="submit">Add</button>
+        </div>
+    
+    </form>
+
+
+    {% for Pmodel in Pmodel_list %}
+    
+    <div class="ui segment">
+        <p class="ui big header"> {{ Pmodel.id }} | {{ Pmodel.title }}</p>
+        
+        {% if Pmodel.complete == False %}
+            <span class="ui grey label" > Not Completed </span>
+        {% else %}
+            <span class="ui green label" > Completed <span></span>
+		{% endif %}
+        
+        <a class="ui blue button" href="/update/{{ Pmodel.id }}">Update</a>
+        <a class="ui red button" href="/delete/{{ Pmodel.id }}">Delete</a>
+        <a class="ui blue right floated button" href="/open_model/{{ Pmodel.id }}">Open Model</a>
+    </div>
+    {% endfor %}
+    </div>
+</body>
+</htmal>

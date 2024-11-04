@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.css">
+    <title>Stock List</title>
+</head>
+<body>
+
+<div class="ui menu">
+  <div class="header item">
+    <h1 " class="ui center aligned header"> Ginger</h1>
+  </div>
+  <a class="item" href="/" >
+    Home
+  </a>
+  <a class="item"  href="/stock_list" >
+    Stock List
+  </a>
+  <a class="item"  href="/graph" >
+    Graph
+  </a>
+</div>
+
+
+    <div style="margin-top: 50px; margin-bottom: 50px;" class="ui container">
+        <title>Stock List</title>
+        <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Stock Name</th>
+                    <th>Start Date</th>
+                    <th>End Date</th>
+                    <th>Number of Records</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stock in stocks %}
+                <tr>
+                    <td>{{ stock.id }}</td>
+                    <td><a href="{{ url_for('view_stock', stock_name=stock.stock_name) }}">{{ stock.stock_name }}</a></td>
+                    <td>{{ stock.start_date }}</td>
+                    <td>{{ stock.end_date }}</td>
+                    <td>{{ stock.number_records }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
+

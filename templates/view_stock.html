@@ -1,0 +1,79 @@
+<!-- view_stock.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.css">
+</head>
+<body>
+<div class="ui menu">
+  <div class="header item">
+    <h1 class="ui center aligned header">Ginger</h1>
+  </div>
+  <a class="item" href="/" >Home</a>
+  <a class="item" href="/stock_list" >Stock List</a>
+</div>
+<div class="ui container" style="margin-top: 50px; margin-bottom: 50px;">
+    <h2>Stock Details for {{ stock.stock_name }}</h2>
+    
+    <table class="ui table">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Stock Name</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Number of Records</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ stock.id }}</td>
+                <td>{{ stock.stock_name }}</td>
+                <td>{{ stock.start_date }}</td>
+                <td>{{ stock.end_date }}</td>
+                <td>{{ stock.number_records }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Price Graphs</h3>
+
+    <h4>Close Price</h4>
+    {% if close_plot %}
+        <img src="data:image/png;base64,{{ close_plot }}" alt="Close Price Graph">
+    {% else %}
+        <p>No 'Close Price' data available for this stock.</p>
+    {% endif %}
+
+    <h4>Open Price</h4>
+    {% if open_plot %}
+        <img src="data:image/png;base64,{{ open_plot }}" alt="Open Price Graph">
+    {% else %}
+        <p>No 'Open Price' data available for this stock.</p>
+    {% endif %}
+
+    <h4>High Price</h4>
+    {% if high_plot %}
+        <img src="data:image/png;base64,{{ high_plot }}" alt="High Price Graph">
+    {% else %}
+        <p>No 'High Price' data available for this stock.</p>
+    {% endif %}
+
+    <h4>Low Price</h4>
+    {% if low_plot %}
+        <img src="data:image/png;base64,{{ low_plot }}" alt="Low Price Graph">
+    {% else %}
+        <p>No 'Low Price' data available for this stock.</p>
+    {% endif %}
+
+    <h4>Volume</h4>
+    {% if volume_plot %}
+        <img src="data:image/png;base64,{{ volume_plot }}" alt="Volume Graph">
+    {% else %}
+        <p>No 'Volume' data available for this stock.</p>
+    {% endif %}
+</div>
+</body>
+</html>
