@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Model Details</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.css">
+</head>
+<body>
+    <div class="ui container">
+        <h2>Model Details</h2>
+        <form action="{{ url_for('submit_model_inputs', model_id=model.id) }}" method="post">
+            <div class="field">
+                <label>Trade Size</label>
+                <input type="number" step="any" name="trade_size" value="{{ model.trade_size or '' }}">
+            </div>
+            <div class="field">
+                <label>Target Trade Profit</label>
+                <input type="number" step="any" name="target_trade_profit" value="{{ model.target_trade_profit or '' }}">
+            </div>
+            <div class="field">
+                <label>Trade Loss Limit</label>
+                <input type="number" step="any" name="trade_loss_limit" value="{{ model.trade_loss_limit or '' }}">
+            </div>
+            <div class="field">
+                <label>Test End Date</label>
+                <input type="date" name="test_end_date" value="{{ model.test_end_date or '' }}">
+            </div>
+            <div class="field">
+                <label>Max Trade Duration</label>
+                <input type="number" name="max_trade_duration" value="{{ model.max_trade_duration or '' }}">
+            </div>
+            <div class="field">
+                <label>Training Duration</label>
+                <input type="number" name="training_duration" value="{{ model.training_duration or '' }}">
+            </div>
+            <div class="field">
+                <label>Test Duration</label>
+                <input type="number" name="test_duration" value="{{ model.test_duration or '' }}">
+            </div>
+            <div class="field">
+                <label>SMA 1 Duration</label>
+                <input type="number" name="sma_1_duration" value="{{ model.sma_1_duration or '' }}">
+            </div>
+            <div class="field">
+                <label>SMA 2 Duration</label>
+                <input type="number" name="sma_2_duration" value="{{ model.sma_2_duration or '' }}">
+            </div>
+            <div class="field">
+                <label>SMA 3 Duration</label>
+                <input type="number" name="sma_3_duration" value="{{ model.sma_3_duration or '' }}">
+            </div>
+            <button type="submit" class="ui button">Submit</button>
+            <a href="{{ url_for('home') }}" class="ui button">Cancel</a>
+        </form>
+    </div>
+</body>
+</html>

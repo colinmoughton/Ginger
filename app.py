@@ -1,8 +1,7 @@
 from fastapi import FastAPI, Depends, Request, Form, status
-
-from starlette.responses import RedirectResponse
+from fastapi.responses import RedirectResponse
 from starlette.templating import Jinja2Templates
-
+from datetime import datetime
 from sqlalchemy.orm import Session
 
 import models
@@ -10,7 +9,7 @@ from database import SessionLocal, engine
 
 models.Base.metadata.create_all(bind=engine)
 
-from models import StockList, metadata_obj
+from models import StockList, PredictiveModel
 from sqlalchemy import Table, select
 import matplotlib.pyplot as plt
 import base64
@@ -27,7 +26,7 @@ def get_db():
     try:
         yield db
     finally:
-        db.close
+        db.close()
 
 
 def plot_to_base64(fig):
@@ -40,12 +39,12 @@ def plot_to_base64(fig):
 
 @app.get("/")
 def home(request: Request, db: Session = Depends(get_db)):
-    Pmodel_list = db.query(models.PredictiveModel).all()
+    Pmodel_list = db.query(PredictiveModel).all()
     return templates.TemplateResponse("base.html", {"request": request, "Pmodel_list": Pmodel_list})
 
 @app.post("/add")
 def add(request: Request, title: str = Form(...), db: Session = Depends(get_db)):
-    new_Pmodel = models.PredictiveModel(title=title)
+    new_Pmodel = PredictiveModel(title=title)
     db.add(new_Pmodel)
     db.commit()
 
@@ -54,7 +53,7 @@ def add(request: Request, title: str = Form(...), db: Session = Depends(get_db))
 
 @app.get("/update/{Pmodel_id}")
 def update(request: Request, Pmodel_id: int, db: Session = Depends(get_db)):
-    Pmodel = db.query(models.PredictiveModel).filter(models.PredictiveModel.id).first()
+    Pmodel = db.query(PredictiveModel).filter(PredictiveModel.id == Pmodel_id).first()
     Pmodel.complete = not Pmodel.complete
     db.commit()
 
@@ -63,7 +62,7 @@ def update(request: Request, Pmodel_id: int, db: Session = Depends(get_db)):
 
 @app.get("/delete/{Pmodel_id}")
 def delete(request: Request, Pmodel_id: int, db: Session = Depends(get_db)):
-    Pmodel = db.query(models.PredictiveModel).filter(models.PredictiveModel.id).first()
+    Pmodel = db.query(PredictiveModel).filter(PredictiveModel.id == Pmodel_id).first()
     db.delete(Pmodel)
     db.commit()
 
@@ -74,7 +73,6 @@ def delete(request: Request, Pmodel_id: int, db: Session = Depends(get_db)):
 def stock_list(request: Request, db: Session = Depends(get_db)):
     stocks = db.query(StockList).all()
     return templates.TemplateResponse("stock_list.html", {"request": request, "stocks": stocks})
-
 
 @app.get("/view_stock/{stock_name}")
 def view_stock(stock_name: str, request: Request, db: Session = Depends(get_db)):
@@ -115,6 +113,42 @@ def view_stock(stock_name: str, request: Request, db: Session = Depends(get_db))
         }
     )
 
+@app.get("/open_model/{model_id}")
+def open_model(model_id: int, request: Request, db: Session = Depends(get_db)):
+    model = db.query(PredictiveModel).filter(PredictiveModel.id == model_id).first()
+    return templates.TemplateResponse("model_details.html", {"request": request, "model": model})
 
+@app.post("/submit_model_inputs/{model_id}")
+def submit_model_inputs(
+    model_id: int, 
+    trade_size: float = Form(...), 
+    target_trade_profit: float = Form(...),
+    trade_loss_limit: float = Form(...),
+    test_end_date: str = Form(...),
+    max_trade_duration: int = Form(...),
+    training_duration: int = Form(...),
+    test_duration: int = Form(...),
+    sma_1_duration: int = Form(...),
+    sma_2_duration: int = Form(...),
+    sma_3_duration: int = Form(...),
+    db: Session = Depends(get_db)
+):
+    # Convert test_end_date from string to date object
+    test_end_date = datetime.strptime(test_end_date, "%Y-%m-%d").date()
 
+    # Update model details directly in PredictiveModels table
+    db.query(PredictiveModel).filter(PredictiveModel.id == model_id).update({
+        "trade_size": trade_size,
+        "target_trade_profit": target_trade_profit,
+        "trade_loss_limit": trade_loss_limit,
+        "test_end_date": test_end_date,
+        "max_trade_duration": max_trade_duration,
+        "training_duration": training_duration,
+        "test_duration": test_duration,
+        "sma_1_duration": sma_1_duration,
+        "sma_2_duration": sma_2_duration,
+        "sma_3_duration": sma_3_duration
+    })
+    db.commit()
+    return RedirectResponse(url=app.url_path_for("home"), status_code=status.HTTP_303_SEE_OTHER)
 

@@ -55,9 +55,10 @@
         
         <a class="ui blue button" href="/update/{{ Pmodel.id }}">Update</a>
         <a class="ui red button" href="/delete/{{ Pmodel.id }}">Delete</a>
-        <a class="ui blue right floated button" href="/open_model/{{ Pmodel.id }}">Open Model</a>
+        <a class="ui blue right floated button" href="{{ url_for('open_model', model_id=Pmodel.id) }}">Open Model</a>
+
     </div>
     {% endfor %}
     </div>
 </body>
-</htmal>
+</html>
