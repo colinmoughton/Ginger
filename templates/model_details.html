@@ -4,22 +4,37 @@
     <meta charset="UTF-8">
     <title>Model Details</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.js"></script>
 </head>
+
 <body>
-    <div class="ui container">
-        <h2>Model Details</h2>
-        <form action="{{ url_for('submit_model_inputs', model_id=model.id) }}" method="post">
+    <!-- Navigation Menu -->
+    <div class="ui menu">
+        <div class="header item">
+            <h1 class="ui center aligned header">Ginger</h1>
+        </div>
+        <a class="item" href="/">Home</a>
+        <a class="item" href="/stock_list">Stock List</a>
+    </div>
+
+    <!-- Main Container -->
+    <div class="ui container" style="margin-top: 50px; max-width: 600px;">
+        <h2 class="ui center aligned header">Model Details</h2>
+
+        <!-- Model Details Form -->
+        <form action="{{ url_for('submit_model_inputs', model_id=model.id) }}" method="post" class="ui form segment">
+            <!-- Form Fields with Aligned Labels and Inputs -->
             <div class="field">
                 <label>Trade Size</label>
-                <input type="number" step="any" name="trade_size" value="{{ model.trade_size or '' }}">
+                <input type="number" step="any" name="trade_size" value="{{ model.trade_size or '' }}" placeholder="Enter Trade Size">
             </div>
             <div class="field">
                 <label>Target Trade Profit</label>
-                <input type="number" step="any" name="target_trade_profit" value="{{ model.target_trade_profit or '' }}">
+                <input type="number" step="any" name="target_trade_profit" value="{{ model.target_trade_profit or '' }}" placeholder="Enter Target Profit">
             </div>
             <div class="field">
                 <label>Trade Loss Limit</label>
-                <input type="number" step="any" name="trade_loss_limit" value="{{ model.trade_loss_limit or '' }}">
+                <input type="number" step="any" name="trade_loss_limit" value="{{ model.trade_loss_limit or '' }}" placeholder="Enter Loss Limit">
             </div>
             <div class="field">
                 <label>Test End Date</label>
@@ -27,30 +42,35 @@
             </div>
             <div class="field">
                 <label>Max Trade Duration</label>
-                <input type="number" name="max_trade_duration" value="{{ model.max_trade_duration or '' }}">
+                <input type="number" name="max_trade_duration" value="{{ model.max_trade_duration or '' }}" placeholder="Enter Duration (days)">
             </div>
             <div class="field">
                 <label>Training Duration</label>
-                <input type="number" name="training_duration" value="{{ model.training_duration or '' }}">
+                <input type="number" name="training_duration" value="{{ model.training_duration or '' }}" placeholder="Enter Training Duration">
             </div>
             <div class="field">
                 <label>Test Duration</label>
-                <input type="number" name="test_duration" value="{{ model.test_duration or '' }}">
+                <input type="number" name="test_duration" value="{{ model.test_duration or '' }}" placeholder="Enter Test Duration">
             </div>
             <div class="field">
                 <label>SMA 1 Duration</label>
-                <input type="number" name="sma_1_duration" value="{{ model.sma_1_duration or '' }}">
+                <input type="number" name="sma_1_duration" value="{{ model.sma_1_duration or '' }}" placeholder="Enter SMA 1 Duration">
             </div>
             <div class="field">
                 <label>SMA 2 Duration</label>
-                <input type="number" name="sma_2_duration" value="{{ model.sma_2_duration or '' }}">
+                <input type="number" name="sma_2_duration" value="{{ model.sma_2_duration or '' }}" placeholder="Enter SMA 2 Duration">
             </div>
             <div class="field">
                 <label>SMA 3 Duration</label>
-                <input type="number" name="sma_3_duration" value="{{ model.sma_3_duration or '' }}">
+                <input type="number" name="sma_3_duration" value="{{ model.sma_3_duration or '' }}" placeholder="Enter SMA 3 Duration">
             </div>
-            <button type="submit" class="ui button">Submit</button>
-            <a href="{{ url_for('home') }}" class="ui button">Cancel</a>
+
+            <!-- Form Buttons -->
+            <div class="ui buttons" style="width: 100%;">
+                <button type="submit" class="ui primary button">Submit</button>
+                <div class="or"></div>
+                <a href="{{ url_for('home') }}" class="ui button">Cancel</a>
+            </div>
         </form>
     </div>
 </body>
