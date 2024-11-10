@@ -11,9 +11,12 @@ models.Base.metadata.create_all(bind=engine)
 
 from models import StockList, PredictiveModel
 from sqlalchemy import Table, select
+from preprocessing import PreProcessing
 import matplotlib.pyplot as plt
 import base64
 from io import BytesIO
+import pandas as pd
+
 
 templates = Jinja2Templates(directory="templates")
 
@@ -85,7 +88,7 @@ def view_stock(stock_name: str, request: Request, db: Session = Depends(get_db))
     stock_data = db.execute(query).fetchall()
 
     # Convert stock_data to a DataFrame
-    import pandas as pd
+    #import pandas as pd
     df = pd.DataFrame(stock_data, columns=["date", "open", "high", "low", "close", "volume"])
     df.set_index("date", inplace=True)
 
@@ -131,7 +134,7 @@ def submit_model_inputs(
     sma_1_duration: int = Form(...),
     sma_2_duration: int = Form(...),
     sma_3_duration: int = Form(...),
-    db: Session = Depends(get_db)
+        db: Session = Depends(get_db)
 ):
     # Convert test_end_date from string to date object
     test_end_date = datetime.strptime(test_end_date, "%Y-%m-%d").date()
@@ -151,4 +154,58 @@ def submit_model_inputs(
     })
     db.commit()
     return RedirectResponse(url=app.url_path_for("home"), status_code=status.HTTP_303_SEE_OTHER)
+
+
+@app.get("/screen/{model_id}")
+def screen(model_id: int, request: Request, db: Session = Depends(get_db)):
+    # Fetch the model details based on model_id
+    model = db.query(PredictiveModel).filter(PredictiveModel.id == model_id).first()
+
+    # Get all stocks from the stock_list table
+    stocks = db.query(StockList).all()
+
+    # Create an instance of the PreProcessing class
+    pre_processor = PreProcessing()
+
+    # Iterate through each stock and apply the screen_stock method
+    results = []
+    for stock in stocks:
+        # Load the stock table into a DataFrame
+        stock_table = Table(stock.stock_name, StockList.metadata, autoload_with=db.bind)
+        query = select(stock_table.c.date, stock_table.c.open, stock_table.c.high, stock_table.c.low, stock_table.c.close, stock_table.c.volume)
+        stock_data = db.execute(query).fetchall()
+        df = pd.DataFrame(stock_data, columns=["date", "open", "high", "low", "close", "volume"])
+        df.set_index("date", inplace=True)
+
+        # Run the screening method
+        result = pre_processor.screen_stock(
+            stock_table=df,
+            trade_size=model.trade_size,
+            target_trade_profit=model.target_trade_profit,
+            trade_loss_limit=model.trade_loss_limit,
+            test_end_date=model.test_end_date,
+            max_trade_duration=model.max_trade_duration,
+            training_duration=model.training_duration,
+            test_duration=model.test_duration,
+            sma_1_duration=model.sma_1_duration,
+            sma_2_duration=model.sma_2_duration,
+            sma_3_duration=model.sma_3_duration
+        )
+
+        # Collect the results for display or further processing
+        results.append({"stock_name": stock.stock_name, "screen_result": result})
+    
+        # Break after the first stock is processed during alg dev
+        break    
+
+    # Debugging: Print results to confirm all stocks are included
+    # print("Screening results:", results)  # Or use logging
+
+    # Render a template to display the results (optional, for viewing)
+    return templates.TemplateResponse("screen_results.html", {"request": request, "results": results})
+
+
+
+
+
 

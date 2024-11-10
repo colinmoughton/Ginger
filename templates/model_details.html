@@ -72,6 +72,11 @@
                 <a href="{{ url_for('home') }}" class="ui button">Cancel</a>
             </div>
         </form>
+        <!-- add this below the existing form buttons -->
+        <div class="ui buttons" style="width: 100%; margin-top: 10px;">
+                <a href="{{ url_for('screen', model_id=model.id) }}" class="ui secondary button">Screen Stocks</a>
+        </div>
     </div>
+   
 </body>
 </html>
