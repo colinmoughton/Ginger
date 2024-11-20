@@ -1,3 +1,5 @@
 *.sqlite
 data/*
 __pycache__/*
+models/*
+.ipynb_checkpoints/*

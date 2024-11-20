@@ -1,36 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-		<meta charset="UTF-8">
-		<title>Screening Results</title>
-		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.css">
-	</head>
-	<body>
-		<div class="ui container" style="margin-top: 50px;">
-			<h2 class="ui center aligned header">Screening Results</h2>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screening Results</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.css">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
+</head>
+<body>
+    <div class="ui container" style="margin-top: 50px;">
+        <h2 class="ui center aligned header">Screening Results</h2>
 
-			<table class="ui celled table">
-				<thead>
-					<tr>
-						<th>Stock Name</th>
-						<th>Screening Result</th>
-					</tr>
-				</thead>
-				<tbody>
-					{% for result in results %}
-					<tr>
-						<td>{{ result.stock_name }}</td>
-						<td>{{ result.screen_result }}</td>
-					</tr>
-					{% endfor %}
-				</tbody>
-			</table>
+        <table class="ui celled striped table" id="screeningTable">
+            <thead>
+                <tr>
+                    <th>Stock Name</th>
+                    <th>Total Records</th>
+                    <th>Occurrence</th>
+                    <th>Occurrence Interval</th>
+                    <th>Average Duration</th>
+                    <th>Four Sigma</th>
+                    <th>Prepare Stock</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for result in results %}
+                    {% if result.screen_result is mapping and
+                          result.screen_result.total_records and
+                          result.screen_result.occurance and
+                          result.screen_result.occ_interval and
+                          result.screen_result.ave_duration and
+                          result.screen_result.four_sigma %}
+                    <tr>
+                        <td>{{ result.stock_name }}</td>
+                        <td>{{ result.screen_result.total_records }}</td>
+                        <td>{{ result.screen_result.occurance }}</td>
+                        <td>{{ result.screen_result.occ_interval }}</td>
+                        <td>{{ result.screen_result.ave_duration }}</td>
+                        <td>{{ result.screen_result.four_sigma }}</td>
+                        <td>
+                          {% if generate_files %}
+                             <form action="{{ url_for('prepare_stock') }}" method="post">
+                               <input type="hidden" name="stock_name" value="{{ result.stock_name }}">
+                               <input type="hidden" name="total_records" value="{{ result.screen_result.total_records }}">
+                               <input type="hidden" name="occurrence" value="{{ result.screen_result.occurance }}">
+                               <input type="hidden" name="occurrence_interval" value="{{ result.screen_result.occ_interval }}">
+                               <input type="hidden" name="average_duration" value="{{ result.screen_result.ave_duration }}">
+                               <input type="hidden" name="four_sigma" value="{{ result.screen_result.four_sigma }}">
+                               <button type="submit" class="ui button">Prepare Stock</button>
+                              {% else %}
+                                <!-- Show the stock name as plain text otherwise -->
+                                {{ "Gen Files" }}
+                            {% endif %}  
+                           </form>
+                       </td>
+                    </tr>
+                    {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
 
-			<div style="text-align: center; margin-top: 20px;">
-				<a href="{{ url_for('home') }}" class="ui button">Back to Home</a>
-			</div>
-		</div>
-	</body>
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="{{ url_for('home') }}" class="ui button">Back to Home</a>
+        </div>
+    </div>
+
+    <style>
+    tr:hover {
+        background-color: #f2f2f2;
+    }
+    </style>
+
+    <script>
+        $(document).ready(function() {
+            $('#screeningTable').DataTable({
+                paging: true,         // Enables pagination
+                searching: true,      // Adds a search box
+                ordering: true,       // Enables sorting
+                info: true,           // Shows information about table entries
+                autoWidth: false,      // Prevents auto-sizing columns
+                pageLength: 15,
+                order: [[2, 'desc']]
+            });
+        });
+    </script>
+</body>
 </html>
-
 

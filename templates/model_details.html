@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Model Details</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.js"></script>
 </head>
 
@@ -65,6 +66,7 @@
                 <input type="number" name="sma_3_duration" value="{{ model.sma_3_duration or '' }}" placeholder="Enter SMA 3 Duration">
             </div>
 
+           
             <!-- Form Buttons -->
             <div class="ui buttons" style="width: 100%;">
                 <button type="submit" class="ui primary button">Submit</button>
@@ -72,11 +74,39 @@
                 <a href="{{ url_for('home') }}" class="ui button">Cancel</a>
             </div>
         </form>
-        <!-- add this below the existing form buttons -->
-        <div class="ui buttons" style="width: 100%; margin-top: 10px;">
-                <a href="{{ url_for('screen', model_id=model.id) }}" class="ui secondary button">Screen Stocks</a>
-        </div>
+  
+
+	<!-- Next Container -->
+    <div class="ui container" style="margin-top: 50px; max-width: 600px;">	
+
+        <!-- Toggle Switch -->
+            <div class="field">
+                <label>Generate Files:</label>
+                <div class="ui toggle checkbox">
+                    <input type="checkbox" name="generate_files" value="true">
+                    <label>Enable file generation</label>
+                </div>
+            </div>
+        <!-- Screen Stocks Button -->
+	<div style="margin-top: 50px;">
+    		<form action="{{ url_for('screen', model_id=model.id) }}" method="post" style="width: 100%;">
+        	<input type="hidden" name="generate_files" id="generate_files_field" value="false">
+        	<button type="submit" class="ui fluid secondary button">Screen Stocks</button>
+    	</form>
+	</div>
     </div>
-   
+</div>
+    <!-- Initialize Semantic UI Components -->
+    <script>
+        $('.ui.toggle.checkbox').checkbox({
+            onChecked: function() {
+                $('#generate_files_field').val('true');
+            },
+            onUnchecked: function() {
+                $('#generate_files_field').val('false');
+            }
+        });
+    </script>
 </body>
 </html>
+

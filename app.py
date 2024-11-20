@@ -3,7 +3,7 @@ from fastapi.responses import RedirectResponse
 from starlette.templating import Jinja2Templates
 from datetime import datetime
 from sqlalchemy.orm import Session
-
+import json
 import models
 from database import SessionLocal, engine
 
@@ -43,6 +43,9 @@ def plot_to_base64(fig):
 @app.get("/")
 def home(request: Request, db: Session = Depends(get_db)):
     Pmodel_list = db.query(PredictiveModel).all()
+    for route in app.routes:
+        print(route.name, route.path)
+
     return templates.TemplateResponse("base.html", {"request": request, "Pmodel_list": Pmodel_list})
 
 @app.post("/add")
@@ -156,8 +159,18 @@ def submit_model_inputs(
     return RedirectResponse(url=app.url_path_for("home"), status_code=status.HTTP_303_SEE_OTHER)
 
 
-@app.get("/screen/{model_id}")
-def screen(model_id: int, request: Request, db: Session = Depends(get_db)):
+
+
+@app.post("/screen/{model_id}")
+def screen(model_id: int, request: Request, db: Session = Depends(get_db), generate_files: str = Form("false")):
+   
+
+    generate_files_bool = generate_files.lower() == "true"
+    if generate_files_bool:
+        print("File generation enabled")
+    else:
+        print("File generation disabled")
+
     # Fetch the model details based on model_id
     model = db.query(PredictiveModel).filter(PredictiveModel.id == model_id).first()
 
@@ -179,6 +192,8 @@ def screen(model_id: int, request: Request, db: Session = Depends(get_db)):
 
         # Run the screening method
         result = pre_processor.screen_stock(
+            model_id=model_id,
+            stock_name=stock.stock_name,
             stock_table=df,
             trade_size=model.trade_size,
             target_trade_profit=model.target_trade_profit,
@@ -189,20 +204,62 @@ def screen(model_id: int, request: Request, db: Session = Depends(get_db)):
             test_duration=model.test_duration,
             sma_1_duration=model.sma_1_duration,
             sma_2_duration=model.sma_2_duration,
-            sma_3_duration=model.sma_3_duration
+            sma_3_duration=model.sma_3_duration,
+            gen_files = generate_files_bool
         )
 
         # Collect the results for display or further processing
         results.append({"stock_name": stock.stock_name, "screen_result": result})
-    
         # Break after the first stock is processed during alg dev
-        break    
+        #break    
 
     # Debugging: Print results to confirm all stocks are included
     # print("Screening results:", results)  # Or use logging
+    # Save dictionarys to jason file
+    with open(f"models/{str(model_id)}/screening_results.json", "w") as final:
+        json.dump(results, final)
 
     # Render a template to display the results (optional, for viewing)
-    return templates.TemplateResponse("screen_results.html", {"request": request, "results": results})
+    return templates.TemplateResponse(
+        "screen_results.html",
+        {"request": request, "results": results, "generate_files": generate_files_bool})
+    
+    
+@app.post("/prepare_stock")
+async def prepare_stock(
+    request: Request,
+    stock_name: str = Form(...),
+    total_records: int = Form(...),
+    occurrence: int = Form(...),
+    occurrence_interval: float = Form(...),
+    average_duration: float = Form(...),
+    four_sigma: float = Form(...)
+):
+    # Use the data as needed
+    print(f"Preparing stock: {stock_name}")
+    print(f"Total Records: {total_records}")
+    print(f"Occurrence: {occurrence}")
+    print(f"Occurrence Interval: {occurrence_interval}")
+    print(f"Average Duration: {average_duration}")
+    print(f"Four Sigma: {four_sigma}")
+
+    return {"message": "Stock prepared successfully"}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
