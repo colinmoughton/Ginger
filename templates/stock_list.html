@@ -2,65 +2,76 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <title>Stock List</title>
+    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.css">
-    <title>Stock List</title>
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
 </head>
 <body>
 
 <div class="ui menu">
   <div class="header item">
-    <h1 " class="ui center aligned header"> Ginger</h1>
+    <img src="/static/images/logo.png" alt="Logo" style="width: 200px; height: auto;">
   </div>
   <a class="item" href="/" >
     Home
   </a>
-  <a class="item"  href="/stock_list" >
+  <a class="item" href="/stock_list">
     Stock List
   </a>
 </div>
 
+<div class="ui container" style="margin-top: 50px; margin-bottom: 50px;">
+    <h2 class="ui center aligned header">Stock List</h2>
 
-    <div style="margin-top: 50px; margin-bottom: 50px;" class="ui container">
-        <title>Stock List</title>
-        <style>
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        th, td {
-            border: 1px solid black;
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-    </style>
+    <table class="ui celled striped table" id="stockTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Stock Name</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Number of Records</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for stock in stocks %}
+            <tr>
+                <td>{{ stock.id }}</td>
+                <td><a href="{{ url_for('view_stock', stock_name=stock.stock_name) }}">{{ stock.stock_name }}</a></td>
+                <td>{{ stock.start_date }}</td>
+                <td>{{ stock.end_date }}</td>
+                <td>{{ stock.number_records }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Stock Name</th>
-                    <th>Start Date</th>
-                    <th>End Date</th>
-                    <th>Number of Records</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for stock in stocks %}
-                <tr>
-                    <td>{{ stock.id }}</td>
-                    <td><a href="{{ url_for('view_stock', stock_name=stock.stock_name) }}">{{ stock.stock_name }}</a></td>
-                    <td>{{ stock.start_date }}</td>
-                    <td>{{ stock.end_date }}</td>
-                    <td>{{ stock.number_records }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+<style>
+tr:hover {
+    background-color: #f2f2f2;
+}
+</style>
+
+<script>
+    $(document).ready(function() {
+        $('#stockTable').DataTable({
+            paging: true,         // Enables pagination
+            searching: true,      // Adds a search box
+            ordering: true,       // Enables sorting
+            info: true,           // Shows information about table entries
+            autoWidth: false,      // Prevents auto-sizing columns
+            pageLength: 15,
+            order: [[0, 'asc']]    // Default sort on the first column (ID)
+        });
+    });
+</script>
 </body>
 </html>
 

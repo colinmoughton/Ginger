@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ML Model Select</title>
+    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.js"></script>
+</head>
+
+<body>
+    <!-- Navigation Menu -->
+    <div class="ui menu">
+        <div class="header item">
+            <img src="/static/images/logo.png" alt="Logo" style="width: 200px; height: auto;">
+        </div>
+        <a class="item" href="/">Home</a>
+        <a class="item" href="/stock_list">Stock List</a>
+    </div>
+
+    <!-- Main Container -->
+    <div class="ui container" style="margin-top: 50px; max-width: 600px;">
+        <h2 class="ui center aligned header">Model Details for the Selected Stock</h2>
+
+        <!-- Model Details Form -->
+        <form action="{{ url_for('submit_model_inputs', model_id=model.id) }}" method="post" class="ui form segment">
+            <!-- Form Fields with Aligned Labels and Inputs -->
+            <div class="field">
+                <label>Trade Size</label>
+                <input type="number" step="any" name="trade_size" value="{{ model.trade_size or '' }}" placeholder="Enter Trade Size">
+            </div>
+            <div class="field">
+                <label>Target Trade Profit</label>
+                <input type="number" step="any" name="target_trade_profit" value="{{ model.target_trade_profit or '' }}" placeholder="Enter Target Profit">
+            </div>
+            <div class="field">
+                <label>Trade Loss Limit</label>
+                <input type="number" step="any" name="trade_loss_limit" value="{{ model.trade_loss_limit or '' }}" placeholder="Enter Loss Limit">
+            </div>
+            <div class="field">
+                <label>Test End Date</label>
+                <input type="date" name="test_end_date" value="{{ model.test_end_date or '' }}">
+            </div>
+            <div class="field">
+                <label>Max Trade Duration</label>
+                <input type="number" name="max_trade_duration" value="{{ model.max_trade_duration or '' }}" placeholder="Enter Duration (days)">
+            </div>
+            <div class="field">
+                <label>Training Duration</label>
+                <input type="number" name="training_duration" value="{{ model.training_duration or '' }}" placeholder="Enter Training Duration">
+            </div>
+            <div class="field">
+                <label>Test Duration</label>
+                <input type="number" name="test_duration" value="{{ model.test_duration or '' }}" placeholder="Enter Test Duration">
+            </div>
+
+           
+            <!-- Form Buttons -->
+            <div class="ui buttons" style="width: 100%;">
+                <button type="submit" class="ui primary button">Submit</button>
+                <div class="or"></div>
+                <a href="{{ url_for('home') }}" class="ui button">Cancel</a>
+            </div>
+        </form>
+  
+
+        {% if  model.trade_size %}
+        <!-- Next Container -->
+        <div class="ui container" style="margin-top: 50px; max-width: 600px;">  
+
+            <!-- Toggle Switch -->
+            <div class="field">
+                <label>Generate Files:</label>
+                <div class="ui toggle checkbox">
+                    <input type="checkbox" name="generate_files" value="true">
+                    <label>Enable file generation</label>
+                </div>
+            </div>
+            <!-- Screen Stocks Button -->
+            <div style="margin-top: 50px;">
+                <form action="{{ url_for('screen', model_id=model.id) }}" method="post" style="width: 100%;">
+                    <input type="hidden" name="generate_files" id="generate_files_field" value="false">
+                    <button type="submit" class="ui fluid secondary button">Screen Stocks</button>
+                </form>
+            </div>
+        </div>
+        
+
+        {% endif %}
+
+        {% if model.selected_stock %}
+	<!-- Next Container -->
+    <div class="ui container" style="margin-top: 50px; max-width: 600px;">	
+	<h2>Selected Stock  {{ model.selected_stock }} : Screening Results</h2>
+    
+    <table class="ui table">
+        <thead>
+            <tr>
+                <th>Total Records</th>
+                <th>Occurrence</th>
+                <th>Occurrence Interval</th>
+                <th>Trade Duration</th>
+                <th>Four Sigma</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{ model.total_records }}</td>
+                <td>{{ model.Occurance }}</td>
+                <td>{{ model.occ_interval }}</td>
+                <td>{{ model.ave_duration }}</td>
+                <td>{{ model.four_sigma }}</td>
+            </tr>
+        </tbody>
+    </table>
+    </div>
+   
+
+    <!-- ML Model Selection Section -->
+        <div class="ui segment" style="margin-top: 30px;">
+            <h3 class="ui dividing header">Select ML Model</h3>
+            <form action="{{ url_for('select_ml_model', model_id=model.id) }}" method="post">
+                <div class="ui form">
+                    <div class="inline fields">
+                        <label for="model">Choose a GRU Model:</label>
+                        <div class="field">
+                            <div class="ui radio checkbox">
+                                <input type="radio" name="ml_model" value="HL_mean" id="HL_mean" checked>
+                                <label for="RandomForrest">High Low Mean</label>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <div class="ui radio checkbox">
+                                <input type="radio" name="ml_model" value="HL" id="HL">
+                                <label for="NN">High Low</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="ui primary button">Train Model</button>
+            </form>
+        </div>
+    </div>
+ {% endif %}
+
+    {% if price_plot %}
+	<div class="ui container" style="margin-top: 50px; max-width: 600px;">	
+	 <div class="ui segment" style="margin-top: 30px;">
+            <h3 class="ui dividing header">Training Results</h3>
+    		
+    		
+      	<img src="data:image/png;base64,{{ price_plot }}" alt="Price Graph">
+    		<img src="data:image/png;base64,{{ loss_plot }}" alt="loss Graph">
+	</div>
+
+		<!--Backtest Button -->
+            <div style="margin-top: 50px;">
+                <form action="{{ url_for('backtest', model_id=model.id) }}" method="post" style="width: 100%;">
+                    
+                    <button type="submit" class="ui fluid secondary button">Run Backtest</button>
+                </form>
+            </div>
+			<div style="margin-top: 50px;">
+			</div>
+   </div>
+
+
+    {% endif %}
+
+{% if avg_label_plot %}
+	<div class="ui container" style="margin-top: 50px; max-width: 600px;">	
+	 <div class="ui segment" style="margin-top: 30px;">
+            <h3 class="ui dividing header">Backtest Results</h3>
+    		
+    		
+      	<img src="data:image/png;base64,{{ avg_label_plot }}" alt="Price Graph">
+    		<img src="data:image/png;base64,{{ pred_avg_label_plot }}" alt="loss Graph">
+	</div>
+
+		
+			<div style="margin-top: 50px;">
+			</div>
+   </div>
+
+
+    {% endif %}
+    <!-- Initialize Semantic UI Components -->
+    <script>
+        $('.ui.toggle.checkbox').checkbox({
+            onChecked: function() {
+                $('#generate_files_field').val('true');
+            },
+            onUnchecked: function() {
+                $('#generate_files_field').val('false');
+            }
+        });
+    </script>
+
+
+</body>
+</html>
+
+

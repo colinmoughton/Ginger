@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Depends, Request, Form, status
 from fastapi.responses import RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from starlette.templating import Jinja2Templates
 from datetime import datetime
 from sqlalchemy.orm import Session
@@ -12,16 +13,22 @@ models.Base.metadata.create_all(bind=engine)
 from models import StockList, PredictiveModel
 from sqlalchemy import Table, select
 from preprocessing import PreProcessing
+from ml_models import Gru_HL_Mean_Model
+import matplotlib
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import base64
 from io import BytesIO
 import pandas as pd
+import os
 
 
 templates = Jinja2Templates(directory="templates")
 
 app = FastAPI()
 
+# Mount static files directory
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # Dependency
 def get_db():
@@ -30,6 +37,12 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def js_r(filename:str):
+    with open(filename) as f_in:
+        return json.load(f_in)
+
 
 
 def plot_to_base64(fig):
@@ -122,7 +135,25 @@ def view_stock(stock_name: str, request: Request, db: Session = Depends(get_db))
 @app.get("/open_model/{model_id}")
 def open_model(model_id: int, request: Request, db: Session = Depends(get_db)):
     model = db.query(PredictiveModel).filter(PredictiveModel.id == model_id).first()
-    return templates.TemplateResponse("model_details.html", {"request": request, "model": model})
+    directory_name = 'models' + '/' + str(model_id) + '/initial_training'
+    try:
+        plots1 = js_r(f"{directory_name}/plots.json")
+        label_plots = js_r(f"{directory_name}/label_plots.json")
+        return templates.TemplateResponse(
+        "model_details2.html",
+        {
+            "request": request,
+            "model": model,
+            "price_plot": plots1["price_plot"],
+            "loss_plot": plots1["loss_plot"],
+            "avg_label_plot": label_plots["avg_label_plot"],
+            "pred_avg_label_plot": label_plots["pred_avg_label_plot"]
+        }
+    )
+
+    except:
+        return templates.TemplateResponse("model_details2.html", {"request": request, "model": model})
+
 
 @app.post("/submit_model_inputs/{model_id}")
 def submit_model_inputs(
@@ -134,9 +165,9 @@ def submit_model_inputs(
     max_trade_duration: int = Form(...),
     training_duration: int = Form(...),
     test_duration: int = Form(...),
-    sma_1_duration: int = Form(...),
-    sma_2_duration: int = Form(...),
-    sma_3_duration: int = Form(...),
+    #sma_1_duration: int = Form(...),
+    #sma_2_duration: int = Form(...),
+    #sma_3_duration: int = Form(...),
         db: Session = Depends(get_db)
 ):
     # Convert test_end_date from string to date object
@@ -150,10 +181,10 @@ def submit_model_inputs(
         "test_end_date": test_end_date,
         "max_trade_duration": max_trade_duration,
         "training_duration": training_duration,
-        "test_duration": test_duration,
-        "sma_1_duration": sma_1_duration,
-        "sma_2_duration": sma_2_duration,
-        "sma_3_duration": sma_3_duration
+        "test_duration": test_duration#,
+        #"sma_1_duration": sma_1_duration,
+        #"sma_2_duration": sma_2_duration,
+        #"sma_3_duration": sma_3_duration
     })
     db.commit()
     return RedirectResponse(url=app.url_path_for("home"), status_code=status.HTTP_303_SEE_OTHER)
@@ -202,9 +233,9 @@ def screen(model_id: int, request: Request, db: Session = Depends(get_db), gener
             max_trade_duration=model.max_trade_duration,
             training_duration=model.training_duration,
             test_duration=model.test_duration,
-            sma_1_duration=model.sma_1_duration,
-            sma_2_duration=model.sma_2_duration,
-            sma_3_duration=model.sma_3_duration,
+            #sma_1_duration=model.sma_1_duration,
+            #sma_2_duration=model.sma_2_duration,
+            #sma_3_duration=model.sma_3_duration,
             gen_files = generate_files_bool
         )
 
@@ -222,18 +253,20 @@ def screen(model_id: int, request: Request, db: Session = Depends(get_db), gener
     # Render a template to display the results (optional, for viewing)
     return templates.TemplateResponse(
         "screen_results.html",
-        {"request": request, "results": results, "generate_files": generate_files_bool})
+        {"request": request, "results": results, "generate_files": generate_files_bool, "Model_id": model_id})
     
     
 @app.post("/prepare_stock")
-async def prepare_stock(
+def prepare_stock(
     request: Request,
     stock_name: str = Form(...),
     total_records: int = Form(...),
     occurrence: int = Form(...),
     occurrence_interval: float = Form(...),
     average_duration: float = Form(...),
-    four_sigma: float = Form(...)
+    four_sigma: float = Form(...),
+    Model_id: int = Form(...),
+        db: Session = Depends(get_db)
 ):
     # Use the data as needed
     print(f"Preparing stock: {stock_name}")
@@ -242,18 +275,194 @@ async def prepare_stock(
     print(f"Occurrence Interval: {occurrence_interval}")
     print(f"Average Duration: {average_duration}")
     print(f"Four Sigma: {four_sigma}")
+    print(f"Model ID: {Model_id}")
 
-    return {"message": "Stock prepared successfully"}
+    
+    db.query(PredictiveModel).filter(PredictiveModel.id == Model_id).update({
+        "selected_stock": stock_name,
+        "total_records": total_records,
+        "Occurance": occurrence,
+        "occ_interval": occurrence_interval,
+        "ave_duration": average_duration,
+        "four_sigma": four_sigma
+    })
+    db.commit()
+    
+
+
+    model = db.query(PredictiveModel).filter(PredictiveModel.id == Model_id).first()
+    return templates.TemplateResponse("model_details2.html", {"request": request, "model": model})
+
+
+
+#@app.post("/select_ml_model/{model_id}")
+#async def select_ml_model(model_id: int, db: Session = Depends(get_db), ml_model: str = Form(...)):
+
+@app.post("/select_ml_model/{model_id}")
+def select_ml_model(
+        request: Request,  # Add this line
+        model_id: int,
+        db: Session = Depends(get_db),
+        ml_model: str = Form(...),
+        ):
+
+    print(f"Selected model for {model_id}: {ml_model}")
+    # Add logic to process the selection
+    model = db.query(PredictiveModel).filter(PredictiveModel.id == model_id).first()
+
+    if ml_model == 'HL_mean':
+        # Create an instance of the PreProcessing class
+        gru_model = Gru_HL_Mean_Model()
+
+        results = []
+        # Get the values for the given model id from db
+        preds, actual, loss = gru_model.check_model(
+            model_id=model_id,
+            stock_name=model.selected_stock,
+            trade_size=model.trade_size,
+            target_trade_profit=model.target_trade_profit,
+            trade_loss_limit=model.trade_loss_limit,
+            test_end_date=model.test_end_date,
+            max_trade_duration=model.max_trade_duration,
+            training_duration=model.training_duration,
+            test_duration=model.test_duration,
+        )
+
+        # Collect the results for display or further processing
+        # results.append({"stock_name": stock.stock_name, "screen_result": result})
+    
+
+        fig = plt.figure(figsize=(11, 6))  # Assign figure to 'fig'
+        plt.plot(actual, label="Actual Average Prices")
+        plt.plot(preds, label="Predicted Average Prices", alpha=0.7)
+        plt.legend()
+        plt.title("Actual vs Predicted High Prices")
+        plt.xlabel("Test Days")
+        plt.ylabel("Price")
+        plots = {}  # Ensure 'plots' dictionary is initialized
+        plots["price_plot"] = plot_to_base64(fig)  # Pass 'fig' instead of 'figure'
+        plt.close(fig)  # Use 'fig' to close the figure
+    
+        fig = plt.figure(figsize=(11, 6))  # Assign figure to 'fig'
+        plt.plot(loss['loss'], label='Train Loss')
+        plt.plot(loss['val_loss'], label='Validation Loss')
+        plt.title('Training and Validation Loss')
+        plt.legend()
+        plt.xlabel("Epochs")
+        plt.ylabel("MSE")
+        #plots = {}  # Ensure 'plots' dictionary is initialized
+        plots["loss_plot"] = plot_to_base64(fig)  # Pass 'fig' instead of 'figure'
+        plt.close(fig)  # Use 'fig' to close the figureplt.show()
+   
+
+        # Variable to store the directory name
+        directory_name = 'models' + '/' + str(model_id) + '/initial_training'
+        # Create the directory if it doesn't exist
+        os.makedirs(directory_name, exist_ok=True)
+        #print(f"Directory '{directory_name}' is ready (created if it didn't exist).")
+        # Save dictionarys to jason file
+        with open(f"{directory_name}/plots.json", "w") as final:
+            json.dump(plots, final)
+
+        plots1 = js_r(f"{directory_name}/plots.json")
+
+        #capture Gru_model type HL_mean, or HL
+        GruModelDict={}
+        GruModelDict["model_type"] = ml_model
+        with open(f"{directory_name}/GruModelDict.json", "w") as final:
+            json.dump(GruModelDict, final)
+
+
+        # Render the template with the stock information and plots
+        return templates.TemplateResponse(
+            "model_details2.html",
+            {
+                "request": request,
+                "model": model,
+                "price_plot": plots1["price_plot"],
+                "loss_plot": plots1["loss_plot"]
+            }
+        )
+    else:
+        print("no other ml models yet!")
+    #return  {"message": f"Model {ml_model} selected for Model ID {model_id}"}
 
 
 
 
+@app.post("/backtest/{model_id}")
+def backtest(
+        request: Request,  # Add this line
+        model_id: int,
+        db: Session = Depends(get_db),
+        ):
+
+    # Add logic to process the selection
+    model = db.query(PredictiveModel).filter(PredictiveModel.id == model_id).first()
+    
+    # Variable to store the directory name
+    directory_name = 'models' + '/' + str(model_id) + '/initial_training'
+    GruModelDict = js_r(f"{directory_name}/GruModelDict.json")
 
 
 
+    if GruModelDict["model_type"] == 'HL_mean':
+        # Create an instance of the PreProcessing class
+        gru_model = Gru_HL_Mean_Model()
+
+        results = []
+        # Get the values for the given model id from db
+        gru_model.backtest(
+            model_id=model_id,
+            stock_name=model.selected_stock,
+            trade_size=model.trade_size,
+            target_trade_profit=model.target_trade_profit,
+            trade_loss_limit=model.trade_loss_limit,
+            test_end_date=model.test_end_date,
+            max_trade_duration=model.max_trade_duration,
+            training_duration=model.training_duration,
+            test_duration=model.test_duration,
+        )
+
+        # Collect the results for display or further processing
+        # results.append({"stock_name": stock.st
+
+        """
+        label_plots = js_r(f"{directory_name}/label_plots.json")
 
 
+        # Render the template with the stock information and plots
+        return templates.TemplateResponse(
+            "model_details2.html",
+            {
+                "request": request,
+                "model": model,
+                "avg_label_plot": label_plots["avg_label_plot"],
+                "pred_avg_label_plot": label_plots["pred_avg_label_plot"]
+            }
+        )
+        """
 
+        try:
+            plots1 = js_r(f"{directory_name}/plots.json")
+            label_plots = js_r(f"{directory_name}/label_plots.json")
+            return templates.TemplateResponse(
+            "model_details2.html",
+            {
+                "request": request,
+                "model": model,
+                "price_plot": plots1["price_plot"],
+                "loss_plot": plots1["loss_plot"],
+                "avg_label_plot": label_plots["avg_label_plot"],
+                "pred_avg_label_plot": label_plots["pred_avg_label_plot"]
+            }
+        )
+
+        except:
+            return templates.TemplateResponse("model_details2.html", {"request": request, "model": model})
+
+    else:
+        print("no other ml models yet!")
 
 
 

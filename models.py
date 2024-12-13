@@ -20,6 +20,12 @@ class PredictiveModel(Base):
     sma_1_duration = Column(Integer)
     sma_2_duration = Column(Integer)
     sma_3_duration = Column(Integer)
+    selected_stock = Column(String)
+    total_records = Column(Integer)
+    Occurance = Column(Integer)
+    occ_interval = Column(Float)
+    ave_duration = Column(Float)
+    four_sigma = Column(Float)
 
 class StockList(Base):
     __tablename__ = "stock_list"

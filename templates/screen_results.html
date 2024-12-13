@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Screening Results</title>
+    <link rel="icon" type="image/x-icon" href="/static/images/favicon.ico">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/semantic-ui@2.5.0/dist/semantic.min.css">
     <!-- DataTables CSS -->
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.1/css/jquery.dataTables.min.css">
@@ -12,6 +13,17 @@
     <script src="https://cdn.datatables.net/1.13.1/js/jquery.dataTables.min.js"></script>
 </head>
 <body>
+    <div class="ui menu">
+  <div class="header item">
+     <img src="/static/images/logo.png" alt="Logo" style="width: 200px; height: auto;">
+  </div>
+  <a class="item" href="/" >
+    Home
+  </a>
+  <a class="item"  href="/stock_list" >
+    Stock List
+  </a>
+ </div>
     <div class="ui container" style="margin-top: 50px;">
         <h2 class="ui center aligned header">Screening Results</h2>
 
@@ -51,6 +63,7 @@
                                <input type="hidden" name="occurrence_interval" value="{{ result.screen_result.occ_interval }}">
                                <input type="hidden" name="average_duration" value="{{ result.screen_result.ave_duration }}">
                                <input type="hidden" name="four_sigma" value="{{ result.screen_result.four_sigma }}">
+                               <input type="hidden" name="Model_id" value="{{ Model_id }}">
                                <button type="submit" class="ui button">Prepare Stock</button>
                               {% else %}
                                 <!-- Show the stock name as plain text otherwise -->

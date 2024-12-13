@@ -17,8 +17,7 @@ class PreProcessing:
 
     def screen_stock(self, model_id: int, stock_name: str, stock_table: pd.DataFrame, trade_size: float, target_trade_profit: float,
                      trade_loss_limit: float, test_end_date: str, max_trade_duration: int,
-                     training_duration: int, test_duration: int, sma_1_duration: int,
-                     sma_2_duration: int, sma_3_duration: int, gen_files: bool):
+                     training_duration: int, test_duration: int, gen_files: bool):
         # Example: Perform calculations or filtering based on SMA durations and trade size
         # This function will return a result that indicates whether the stock meets the criteria
 
@@ -45,8 +44,7 @@ class PreProcessing:
 
         # Check that we have or can get a valid test_end_date
         if self.check_enough_data(stock_table, max_trade_duration,
-                     training_duration, test_duration, sma_1_duration,
-                     sma_2_duration, sma_3_duration) == False:
+                     training_duration, test_duration) == False:
             return "Not enough data for this stock"
 
         if self.slice_and_label(model_id, stock_name, stock_table, trade_size, target_trade_profit, 
@@ -91,14 +89,15 @@ class PreProcessing:
 
 
     def check_enough_data(self, stock_table: pd.DataFrame, max_trade_duration: int,
-                     training_duration: int, test_duration: int, sma_1_duration: int,
-                          sma_2_duration: int, sma_3_duration: int):   
+                     training_duration: int, test_duration: int):   
         # Define how many records needed before and after test_end_date
         
         # Records before - need to work out max SMA length first
-        SMA_trail_length = max(sma_1_duration , sma_2_duration , sma_3_duration)
+        #SMA_trail_length = max(sma_1_duration , sma_2_duration , sma_3_duration)
+        SMA_trail_length = 99
 
-        records_before = SMA_trail_length + training_duration + test_duration + max_trade_duration
+        #records_before = SMA_trail_length + training_duration + test_duration + max_trade_duration
+        records_before = SMA_trail_length + training_duration + test_duration
         self.rec_before = records_before
         #print("Records Before: " , records_before)
 
@@ -128,7 +127,7 @@ class PreProcessing:
         end_pos =  self.index_loc + self.rec_after + 1  # +1 to include the row at `index_location + records_after`
 
         # Slice the DataFrame
-        trimmed_df = stock_table.iloc[start_pos:end_pos]
+        trimmed_df = stock_table.iloc[start_pos:end_pos].copy()
 
         #self.trim_df=trimmed_df
         # Print the result or inspect
@@ -178,11 +177,22 @@ class PreProcessing:
                 current_high = trimmed_df.iloc[i + j]['high']
                 current_low = trimmed_df.iloc[i + j]['low']
 
+
+                if j==1:
+                    if start_value < current_low or start_value > current_high:
+                        break
+
+                if j==1:
+                    if current_low < low_threshold:
+                        break
                 # Check if high threshold is met and capture the days taken to meet it
-                if not high_condition_met and current_high > high_threshold:
-                    high_condition_met = True
-                    days_to_hit_high_threshold_dict[i] = j  # Save the days it took to reach the threshold
-                    break
+                if not high_condition_met and current_high > high_threshold and current_low > low_threshold:
+                    # high_condition_met = True
+                    
+                    if j>1:
+                        high_condition_met = True
+                        days_to_hit_high_threshold_dict[i] = j  # Save the days it took to reach the threshold
+                        break
                 # Check if low threshold is met
                 if not low_condition_met and current_low < low_threshold:
                     low_condition_met = True
