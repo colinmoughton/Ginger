@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import os
 import tensorflow as tf
+from tensorflow.keras.callbacks import Callback
 import joblib
 from sklearn.preprocessing import MinMaxScaler
 from keras.layers import Input, GRU, Dropout, Dense, Attention, GlobalAveragePooling1D
@@ -14,8 +15,7 @@ import matplotlib.pyplot as plt
 import json
 import base64
 from io import BytesIO
-from sklearn.preprocessing import MinMaxScaler
-
+from sklearn.metrics import r2_score
 
 class Gru_HL_Mean_Model:
     
@@ -62,6 +62,7 @@ class Gru_HL_Mean_Model:
         buf.seek(0)
         return base64.b64encode(buf.getvalue()).decode("utf-8")
 
+    
 
     def check_model(self, model_id: int, stock_name: str, trade_size: float, target_trade_profit: float,
                      trade_loss_limit: float, test_end_date: str, max_trade_duration: int,
@@ -167,24 +168,54 @@ class Gru_HL_Mean_Model:
 
         # Define Model
         attention_model = Model(inputs=input_layer, outputs=output_layer)
-        attention_model.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
 
+        #attention_model.compile(optimizer='adam', loss='mean_squared_error', metrics=['accuracy'])
+
+        attention_model.compile(optimizer= tf.keras.optimizers.Adam(learning_rate=0.001), 
+                                loss='mean_squared_error', metrics=['accuracy']
+                                )
+
+
+        # Instantiate the R² callback
+        r2_callback = R2ScoreCallback(validation_data=(X_test, y_test), target_scaler=target_scaler)
+
+        # Train the model with the callback
         history = attention_model.fit(
                 X_train, y_train,
                 validation_data=(X_test, y_test),
-                epochs=80,
+                epochs=500,
                 batch_size=16,
-                callbacks=[tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)]
+                callbacks=[
+                            tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=50, restore_best_weights=True),
+                            r2_callback  # Add the custom R² callback
+                        ]
         )
 
+
+
+        """
+        history = attention_model.fit(
+                X_train, y_train,
+                validation_data=(X_test, y_test),
+                epochs=50,
+                batch_size=16,
+                callbacks=[tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=50, restore_best_weights=True)]
+        )
+        """
         # Predict
         predicted_gru = attention_model.predict(X_test)
         loss = history.history
+        loss['val_r2_score'] = r2_callback.epoch_r2_scores
 
         # Inverse transform the predicted and actual values
         predicted_gru_actual = target_scaler.inverse_transform(predicted_gru)  # Use target scaler for "high"
         y_test_actual = target_scaler.inverse_transform(y_test.reshape(-1, 1))  # Reshape y_test to (num_samples, 1)
-       
+      
+
+        r2 = r2_score(y_test_actual.flatten(), predicted_gru_actual.flatten())
+        print(f"R² Score: {r2}")
+
+
         model_path = f"{self.direc_name}/initial_training/model.keras"
         attention_model.save(model_path)
 
@@ -539,4 +570,22 @@ class Gru_HL_Mean_Model:
         return #preds, actual, loss
 
 
+class R2ScoreCallback(Callback):
+    def __init__(self, validation_data, target_scaler):
+        self.validation_data = validation_data
+        self.target_scaler = target_scaler
+        self.epoch_r2_scores = []  # To store validation R² for each epoch
+
+    def on_epoch_end(self, epoch, logs=None):
+        X_val, y_val = self.validation_data
+            # Predict on validation set
+        y_pred = self.model.predict(X_val, verbose=0)
+        # Inverse transform to get actual values
+        y_pred_actual = self.target_scaler.inverse_transform(y_pred)
+        y_val_actual = self.target_scaler.inverse_transform(y_val.reshape(-1, 1))
+        # Calculate R²
+        r2 = r2_score(y_val_actual.flatten(), y_pred_actual.flatten())
+        self.epoch_r2_scores.append(r2)
+        # Add the R² score to the logs (available in history.history)
+        logs['val_r2_score'] = r2
 

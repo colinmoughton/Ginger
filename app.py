@@ -145,6 +145,7 @@ def open_model(model_id: int, request: Request, db: Session = Depends(get_db)):
             "request": request,
             "model": model,
             "price_plot": plots1["price_plot"],
+            "r2_plot": plots1["r2_plot"],
             "loss_plot": plots1["loss_plot"],
             "avg_label_plot": label_plots["avg_label_plot"],
             "pred_avg_label_plot": label_plots["pred_avg_label_plot"]
@@ -336,24 +337,34 @@ def select_ml_model(
         plt.plot(actual, label="Actual Average Prices")
         plt.plot(preds, label="Predicted Average Prices", alpha=0.7)
         plt.legend()
-        plt.title("Actual vs Predicted High Prices")
+        plt.title("Actual vs Predicted Average Prices")
         plt.xlabel("Test Days")
         plt.ylabel("Price")
         plots = {}  # Ensure 'plots' dictionary is initialized
         plots["price_plot"] = plot_to_base64(fig)  # Pass 'fig' instead of 'figure'
         plt.close(fig)  # Use 'fig' to close the figure
     
+
+        fig = plt.figure(figsize=(11, 6))  # Assign figure to 'fig'
+        # Plot R²
+        plt.plot(loss['val_r2_score'], label='Training R²')
+        plt.title('R² Score')
+        plt.xlabel('Epochs')
+        plt.ylabel('R²')
+        plt.legend()
+        plots["r2_plot"] = plot_to_base64(fig)  # Pass 'fig' instead of 'figure'
+        plt.close(fig)  # Use 'fig' to close the figure
+
+
         fig = plt.figure(figsize=(11, 6))  # Assign figure to 'fig'
         plt.plot(loss['loss'], label='Train Loss')
         plt.plot(loss['val_loss'], label='Validation Loss')
         plt.title('Training and Validation Loss')
         plt.legend()
         plt.xlabel("Epochs")
-        plt.ylabel("MSE")
-        #plots = {}  # Ensure 'plots' dictionary is initialized
+        plt.ylabel("Loss")
         plots["loss_plot"] = plot_to_base64(fig)  # Pass 'fig' instead of 'figure'
         plt.close(fig)  # Use 'fig' to close the figureplt.show()
-   
 
         # Variable to store the directory name
         directory_name = 'models' + '/' + str(model_id) + '/initial_training'
@@ -380,6 +391,7 @@ def select_ml_model(
                 "request": request,
                 "model": model,
                 "price_plot": plots1["price_plot"],
+                "r2_plot": plots1["r2_plot"],
                 "loss_plot": plots1["loss_plot"]
             }
         )
@@ -452,6 +464,7 @@ def backtest(
                 "request": request,
                 "model": model,
                 "price_plot": plots1["price_plot"],
+                "r2_plot": plots1["r2_plot"],
                 "loss_plot": plots1["loss_plot"],
                 "avg_label_plot": label_plots["avg_label_plot"],
                 "pred_avg_label_plot": label_plots["pred_avg_label_plot"]
