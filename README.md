@@ -15,7 +15,11 @@ This is a final project submission for a Code Labs Academy Data Science and AI B
 [Documentation](https://github.com/colinmoughton/Ginger/blob/master/docs/Ginger_Report_Rev1.pdf)
 
 
+[Overview slides](https://github.com/colinmoughton/Ginger/blob/master/docs/Slides_Rev1.pdf)
+
 ## Screenshots
+
+![App Screenshot](https://github.com/colinmoughton/Ginger/blob/master/docs/Images/Mdetails.png)
 
 ![App Screenshot](https://github.com/colinmoughton/Ginger/blob/master/docs/Images/8-TrainingResAndBackTestStart.png)
 
